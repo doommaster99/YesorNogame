@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Yes or No? QuizGame </title>
+<title>ใช่หรือไม่? ภาพถ่ายทางอากาศและดาวเทียม</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--text:#14213d;--muted:#5c677d;--line:#d9e1ec;--yes:#1b9e5a;--no:#d64545;--accent:#2563eb;--p1:#2563eb;--p2:#e07a1f;--p3:#8b3fd1;--p4:#d6336c;--sky1:#9fd8ff;--sky2:#fff1c9;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
@@ -100,6 +100,10 @@ html.nobg:not(.home){background:var(--bg);background-image:none}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#14213d;color:#fff;padding:10px 18px;border-radius:999px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.35)}
 .stage.noimg .hot{background:linear-gradient(135deg,#1b9e5a,#2563eb);border:3px solid #fff;display:flex;align-items:center;justify-content:center}
 .stage.noimg .hot::after{content:"▶ เริ่มเกม";color:#fff;font-weight:700;font-size:max(1.1rem,2vw)}
+.ctl{display:flex;gap:12px}
+.ctl button{flex:1;padding:16px;font-size:1.2rem;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.ctl .rv{background:linear-gradient(135deg,#ff9f1c,#ff4d8d)}
+.ctl .sk{background:linear-gradient(135deg,#6c5ce7,#2563eb)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9B%B0%EF%B8%8F%3C/text%3E%3C/svg%3E">
@@ -215,7 +219,7 @@ function show() {
   app.innerHTML = `<div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>ข้อ ${S.i + 1}/${S.qs.length} · ${LVN[PLAN[S.i]]}</span><span id="tl">${TIME}</span></div>
   <div class="bar"><i id="bar"></i></div>
   
-  <div class="players n${S.n}">${pl}</div><div id="res"></div>`;
+  <div class="players n${S.n}">${pl}</div><div id="res"><div class="ctl"><button class="rv" onclick="reveal()">💡 กดเฉลย</button><button class="sk" onclick="skipQ()">⏭️ ข้ามเฉลย</button></div></div>`;
   clearInterval(timer);
   timer = setInterval(tick, 100);
 }
@@ -245,7 +249,7 @@ function reveal() {
   S.ans.forEach((r, p) => {
     $("#y" + p).disabled = $("#n" + p).disabled = true;
     let msg;
-    if (!r) msg = `<span class="bad">หมดเวลา +0</span>`;
+    if (!r) msg = `<span class="bad">${left() > 0 ? "ไม่ได้ตอบ" : "หมดเวลา"} +0</span>`;
     else if (r.a === qq(p)[1]) { const pts = 50 + 50 * PLAN[S.i] + Math.ceil(r.left) * 10; S.score[p] += pts; S.correct[p]++; msg = `<span class="ok">ถูก +${pts}</span>`; }
     else msg = `<span class="bad">ผิด +0</span>`;
     $("#st" + p).innerHTML = msg;
@@ -257,6 +261,8 @@ function reveal() {
   $("#res").innerHTML = `
     <button onclick="next()" style="width:100%">${last ? "ดูผลสรุป" : "ข้อต่อไป"}</button>`;
 }
+
+function skipQ() { if (S.done) return; S.done = true; clearInterval(timer); next(); }
 
 function next() { S.i++; S.i < S.qs.length ? show() : finish(); }
 
