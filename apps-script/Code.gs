@@ -1,5 +1,5 @@
 /**
- * เกม "ใช่หรือไม่?" — ฝั่งเซิร์ฟเวอร์ (Google Apps Script)
+ * เกม "Yes or No?" — ฝั่งเซิร์ฟเวอร์ (Google Apps Script)
  * - แสดงเกมเป็น Web App (ไฟล์ index.html, ไม่บังคับ)
  * - เปิด API (JSON) ให้เกมที่โฮสต์ที่อื่น เช่น GitHub Pages เรียกใช้
  * - อ่านคำถามจากชีต "Questions"
@@ -32,7 +32,7 @@ function doGet(e) {
   }
   try {
     return HtmlService.createHtmlOutputFromFile('index')
-      .setTitle('ใช่หรือไม่? ภาพถ่ายทางอากาศและดาวเทียม')
+      .setTitle('Yes or No Quizgame')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (err) {
     return ContentService.createTextOutput('Yes/No Geography API is running.');
