@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ใช่หรือไม่? ภาพถ่ายทางอากาศและดาวเทียม</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#14213d;--muted:#5c677d;--line:#d9e1ec;--yes:#1b9e5a;--no:#d64545;--accent:#2563eb;--p1:#2563eb;--p2:#e07a1f;--p3:#8b3fd1;--p4:#d6336c;--sky1:#9fd8ff;--sky2:#fff1c9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1626;--card:#18233a;--text:#e8eefc;--muted:#9fb0cf;--line:#2c3a57;--accent:#5b8cff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1626;--card:#18233a;--text:#e8eefc;--muted:#9fb0cf;--line:#2c3a57;--accent:#5b8cff;color-scheme:dark}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--text);font-family:"Noto Sans Thai","Sarabun",Tahoma,system-ui,sans-serif;line-height:1.5}
+#app{max-width:1600px;margin:0 auto;padding:12px 16px}
+h1{font-size:1.5rem;margin:8px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:14px;color:#fff;background:var(--accent);font-weight:700}
+button:disabled{opacity:.35;cursor:default}
+.menu button{display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 3px 10px rgba(0,0,0,.2);width:100%;margin:8px 0;font-size:1.1rem}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;width:100%;background:var(--accent)}
+.top{display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.q{font-size:1.25rem;font-weight:700;margin:6px 0}
+.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:12px}
+.pl{border:2px solid var(--c);border-radius:12px;padding:8px;background:var(--card)}
+.pl h3{margin:0 0 6px;font-size:.95rem;color:var(--c)}
+.pl .row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pl button{padding:20px 4px;font-size:1.2rem}
+.yes{background:var(--yes)}.no{background:var(--no)}
+.pl .st{font-size:.85rem;margin-top:6px;min-height:1.3em}
+.ok{color:var(--yes);font-weight:700}.bad{color:var(--no);font-weight:700}
+.ans{font-weight:700;font-size:1.1rem}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1}
+.stars{opacity:0}
+@media (prefers-color-scheme:dark){:root:not([data-theme='light']){--sky1:#0a1030;--sky2:#2b1561}:root:not([data-theme='light']) .stars{opacity:.9}}
+:root[data-theme='dark']{--sky1:#0a1030;--sky2:#2b1561}
+:root[data-theme='dark'] .stars{opacity:.9}
+.card,.pl{box-shadow:0 4px 14px rgba(20,33,61,.14)}
+.hero{text-align:center}.menu h1{text-align:center}
+.menu button:first-of-type{background:linear-gradient(135deg,#1b9e5a,#2563eb)}
+.pl{padding:8px;border-radius:14px;overflow:hidden}
+.pl h3{background:var(--c);color:#fff;margin:-8px -8px 10px;padding:8px 12px;font-size:1rem;display:flex;justify-content:space-between}
+.pq{font-weight:700;font-size:1.3rem;margin:8px 4px 14px;min-height:4.5em}
+#res{margin-top:12px}
+.players.n1{grid-template-columns:1fr;max-width:840px;margin-inline:auto}
+.menu,#app>.card{max-width:640px;margin-inline:auto}
+.players.n2{grid-template-columns:repeat(2,1fr)}
+.players.n4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:1100px){.players.n4{grid-template-columns:repeat(2,1fr)}}
+.players.n3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:860px){.players.n2,.players.n3,.players.n4{grid-template-columns:1fr}}
+button.home{padding:8px 12px;font-size:.9rem;background:var(--muted)}
+.rank{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+html.home{background:#79c6f2}
+html.home #bg{display:none}
+.home-menu{position:fixed;left:0;right:0;bottom:0;max-width:none!important;margin:0!important;padding:34px 16px calc(16px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(5,25,60,.78))}
+.hint{color:#fff;text-shadow:0 1px 4px #000;text-align:center;margin:0 0 10px;font-size:.95rem}
+.modes{display:flex;gap:10px;flex-wrap:wrap;max-width:1000px;margin:0 auto}
+.modes button{flex:1 1 200px;margin:0;font-size:1.1rem}
+html:not(.home){background:#bfe3f7 url(assets/play.jpg) center/cover no-repeat fixed;min-height:100%}
+#bg{display:none}
+.top{background:rgba(255,255,255,.88);color:#14213d;padding:8px 12px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.bar{background:rgba(255,255,255,.75)}
+#app>h1{background:rgba(255,255,255,.88);color:#14213d;padding:8px 16px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.set{max-width:760px;margin:0 auto}
+.set .card{margin:12px 0}.set h2{margin:0 0 4px;font-size:1.15rem}
+.lab{font-weight:700;margin:14px 0 6px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1 1 70px;padding:10px;background:var(--line);color:var(--text)}
+.seg button.on{background:var(--accent);color:#fff}
+.set input[type=number]{width:90px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit}
+.set input[type=range]{width:100%}
+.fmt{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:6px}
+.fmt td,.fmt th{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.msg{margin-top:8px;font-weight:700}
+html.nobg:not(.home){background:var(--bg);background-image:none}
+.home-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#79c6f2}
+.stage{position:relative;width:min(100vw,177.78vh);aspect-ratio:16/9;background:url(assets/home.jpg) center/100% 100% no-repeat}
+.hot{position:absolute;left:78.5%;top:82%;width:20.5%;height:15.5%;border-radius:40px;background:transparent;padding:0;box-shadow:none}
+.hot:hover{background:rgba(255,255,255,.18)}.hot:focus-visible{outline:4px solid #fff}
+.gear{position:absolute;right:1.5%;top:2%;padding:8px 14px;font-size:max(.8rem,1.1vw);background:rgba(20,33,61,.82)}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.gear{top:3%;right:2%;padding:.5em 1.1em;font-size:max(1.1rem,2vw);line-height:1.2;border:3px solid #fff;border-radius:999px;background:linear-gradient(135deg,#ff9f1c,#ff4d8d);box-shadow:0 6px 16px rgba(0,0,0,.35);animation:pop 2s ease-in-out infinite}
+.gear:hover{filter:brightness(1.1)}
+@media (prefers-reduced-motion:reduce){.gear{animation:none}}
+.set{max-width:960px}
+.set .top{background:linear-gradient(90deg,#2563eb,#8b3fd1,#d6336c);color:#fff;font-size:1.5rem;padding:12px 16px}
+.set .card{overflow:hidden;padding:18px 20px;border:0;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.set h2{margin:-18px -20px 14px;padding:12px 20px;background:var(--c);color:#fff;font-size:1.5rem}
+.set .lab{font-size:1.1rem}.set .muted{font-size:1rem}
+.set .seg button{padding:16px 10px;font-size:1.2rem;background:var(--card);border:2px solid var(--c);color:var(--text)}
+.set .seg button.on{background:var(--c);color:#fff}
+.set input[type=number]{width:130px;padding:12px;font-size:1.3rem;border:2px solid var(--c)}
+.set input[type=file]{font-size:1rem;padding:8px 0}
+.set .card>button{padding:14px 20px;font-size:1.1rem;margin-top:10px}
+.set .menu button{font-size:1.5rem;padding:20px}
+.nm{display:block;width:100%;margin:6px 0;padding:12px;font:inherit;font-size:1.1rem;border-radius:8px;border:2px solid var(--c);background:var(--bg);color:var(--text)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#14213d;color:#fff;padding:10px 18px;border-radius:999px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.stage.noimg .hot{background:linear-gradient(135deg,#1b9e5a,#2563eb);border:3px solid #fff;display:flex;align-items:center;justify-content:center}
+.stage.noimg .hot::after{content:"▶ เริ่มเกม";color:#fff;font-weight:700;font-size:max(1.1rem,2vw)}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9B%B0%EF%B8%8F%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<svg id='bg' viewBox='0 0 400 800' preserveAspectRatio='xMidYMid slice' aria-hidden='true'><defs><linearGradient id='sk' x1='0' y1='0' x2='0' y2='1'><stop offset='0' style='stop-color:var(--sky1)'/><stop offset='1' style='stop-color:var(--sky2)'/></linearGradient><radialGradient id='eg' cx='.35' cy='.3'><stop offset='0' stop-color='#4fc3f7'/><stop offset='1' stop-color='#1565c0'/></radialGradient><radialGradient id='sun'><stop offset='0' stop-color='#ffd54f' stop-opacity='.9'/><stop offset='1' stop-color='#ffd54f' stop-opacity='0'/></radialGradient></defs><rect width='400' height='800' fill='url(#sk)'/><circle cx='60' cy='90' r='120' fill='url(#sun)'/><g class='stars' fill='#fff'><circle cx='40' cy='60' r='1.6'/><circle cx='120' cy='30' r='1.2'/><circle cx='210' cy='80' r='1.8'/><circle cx='330' cy='40' r='1.4'/><circle cx='370' cy='210' r='1.2'/><circle cx='90' cy='200' r='1.5'/><circle cx='260' cy='260' r='1.1'/><circle cx='20' cy='380' r='1.4'/><circle cx='380' cy='420' r='1.6'/><circle cx='300' cy='350' r='1'/></g><ellipse cx='200' cy='170' rx='230' ry='60' fill='none' stroke='#ff7043' stroke-width='2' stroke-dasharray='6 8' opacity='.7' transform='rotate(-12 200 170)'/><g transform='translate(318 112) rotate(-25)'><rect x='-12' y='-9' width='24' height='18' rx='3' fill='#ffca28' stroke='#f57c00' stroke-width='1.5'/><rect x='-52' y='-7' width='36' height='14' fill='#29b6f6' stroke='#0277bd'/><rect x='16' y='-7' width='36' height='14' fill='#29b6f6' stroke='#0277bd'/><path d='M-40-7v14M-28-7v14M28-7v14M40-7v14' stroke='#0277bd'/><path d='M0 9v5' stroke='#555'/><circle cx='0' cy='15' r='4' fill='#ef5350'/></g><g stroke='#ffb300' stroke-width='3' fill='none' opacity='.8' stroke-linecap='round'><path d='M40 300v-26h26M160 274h26v26M186 400v26h-26M66 426H40v-26'/><path d='M113 350h14M120 343v14'/></g><circle cx='200' cy='1010' r='470' fill='url(#eg)'/><g fill='#66bb6a'><path d='M90 600q30-40 80-20q30 20 10 50q-30 30-70 10z'/><path d='M250 570q40-20 70 10q20 30-20 50q-40 10-60-20z'/><path d='M170 700q40-10 60 20q-10 40-50 30z'/></g><circle cx='200' cy='1010' r='470' fill='none' stroke='#b3e5fc' stroke-width='6' opacity='.6'/></svg>
+<div id="app"></div>
+<script>
+// ---------- เนื้อหา: [ข้อความ, คำตอบ(true=ใช่), คำอธิบาย] แก้/เพิ่มได้ที่นี่ ----------
+let QUESTIONS = [
+["ภาพถ่ายทางอากาศถ่ายจากอุปกรณ์ที่อยู่ในชั้นบรรยากาศ เช่น เครื่องบิน บอลลูน หรือโดรน", true, "ภาพถ่ายทางอากาศใช้แพลตฟอร์มที่บินอยู่ในชั้นบรรยากาศ ส่วนภาพถ่ายดาวเทียมถ่ายจากอวกาศ"],
+["ดาวเทียมสำรวจทรัพยากรโคจรอยู่ในอวกาศ จึงถ่ายภาพได้ครอบคลุมพื้นที่กว้างทั่วโลก", true, "การโคจรรอบโลกทำให้ดาวเทียมบันทึกข้อมูลพื้นที่กว้างและซ้ำพื้นที่เดิมได้เป็นรอบ"],
+["ภาพถ่ายทางอากาศแนวดิ่ง ถ่ายโดยให้แกนกล้องตั้งฉากกับพื้นดิน", true, "ภาพแนวดิ่งนิยมใช้ทำแผนที่ เพราะบิดเบือนน้อยกว่าภาพแนวเฉียง"],
+["ภาพถ่ายดาวเทียมครอบคลุมพื้นที่แคบกว่าภาพถ่ายทางอากาศเสมอ", false, "โดยทั่วไปภาพดาวเทียมครอบคลุมพื้นที่กว้างกว่า เพราะถ่ายจากที่สูงมาก"],
+["ในภาพสีผสมเท็จ (False color) พืชพรรณที่เติบโตดีมักปรากฏเป็นสีแดง", true, "พืชสีเขียวสะท้อนรังสีอินฟราเรดใกล้ได้มาก เมื่อกำหนดให้เป็นช่องสีแดงจึงเห็นเป็นสีแดง"],
+["ภาพถ่ายทางอากาศและภาพถ่ายดาวเทียมใช้ติดตามการเปลี่ยนแปลงการใช้ที่ดินไม่ได้", false, "การเปรียบเทียบภาพต่างช่วงเวลาใช้ติดตามการขยายตัวของเมืองและการบุกรุกป่าได้"],
+["ไทยโชต (THEOS) เป็นดาวเทียมสำรวจทรัพยากรของประเทศไทย", true, "THEOS เป็นดาวเทียมสำรวจโลกดวงแรกของไทย ใช้ถ่ายภาพเพื่อวางแผนด้านต่างๆ"],
+["ดาวเทียมถ่ายภาพได้เฉพาะตอนกลางวันเท่านั้น", false, "ดาวเทียมระบบเรดาร์ส่งคลื่นเอง จึงบันทึกได้ทั้งกลางคืนและทะลุเมฆได้"],
+["เมฆบดบังพื้นผิวในภาพถ่ายดาวเทียมระบบแสง (Optical) ได้", true, "ระบบแสงอาศัยแสงสะท้อน เมฆจึงบังพื้นผิวที่อยู่ด้านล่าง"],
+["GPS เป็นดาวเทียมที่ใช้ถ่ายภาพพื้นผิวโลก", false, "GPS ใช้บอกตำแหน่งบนโลก ไม่ได้ใช้ถ่ายภาพ"],
+["ภาพถ่ายทางอากาศมีมาตราส่วนเท่ากันทุกจุดเหมือนแผนที่เสมอ", false, "ความสูงต่ำของภูมิประเทศทำให้มาตราส่วนคลาดเคลื่อน จึงต้องปรับแก้ภาพก่อนทำแผนที่"],
+["ภาพที่มีรายละเอียด (Resolution) สูงจะเห็นวัตถุขนาดเล็กได้ชัดกว่า", true, "ความละเอียดเชิงพื้นที่ยิ่งสูง แต่ละพิกเซลยิ่งแทนพื้นที่จริงที่เล็กลง"],
+["ระบบสารสนเทศภูมิศาสตร์ (GIS) ใช้เก็บ วิเคราะห์ และแสดงข้อมูลเชิงพื้นที่", true, "GIS ช่วยซ้อนทับข้อมูลหลายชั้นเพื่อวิเคราะห์ เช่น พื้นที่เสี่ยงน้ำท่วม"],
+["ภาพถ่ายดาวเทียมใช้ติดตามพายุและพื้นที่น้ำท่วมได้", true, "ดาวเทียมอุตุนิยมวิทยาและดาวเทียมสำรวจโลกช่วยเฝ้าระวังภัยพิบัติได้"],
+["การรับรู้จากระยะไกล (Remote Sensing) ต้องสัมผัสวัตถุโดยตรงจึงจะได้ข้อมูล", false, "หัวใจของ Remote Sensing คือเก็บข้อมูลโดยไม่ต้องสัมผัสวัตถุ"],
+["ดาวเทียมค้างฟ้า (Geostationary) อยู่เหนือตำแหน่งเดิมของโลกตลอดเวลา", true, "จึงเหมาะกับการเฝ้าดูเมฆและสภาพอากาศพื้นที่เดิมอย่างต่อเนื่อง"],
+["ภาพถ่ายดาวเทียมดูแล้วเข้าใจได้ทันที ไม่ต้องอาศัยการแปลความหมาย", false, "ต้องอาศัยสี รูปร่าง ขนาด เงา และลวดลาย มาช่วยแปลความหมาย"],
+["เงาของวัตถุในภาพถ่ายช่วยประมาณความสูงของวัตถุได้", true, "เงาที่ยาวบ่งบอกว่าวัตถุสูง จึงเป็นหนึ่งในองค์ประกอบการแปลความหมายภาพ"],
+["แอปแผนที่ออนไลน์อย่าง Google Earth ใช้ภาพถ่ายดาวเทียมและภาพถ่ายทางอากาศ", true, "ภูมิสารสนเทศช่วยหาเส้นทาง ดูพื้นที่จริง และวางแผนในชีวิตประจำวันได้"]
+];
+// คำถามเพิ่มเติม [ข้อความ, คำตอบ, คำอธิบาย, ระดับ 1=ง่าย 2=ปานกลาง 3=ยาก]
+const MORE = [
+[`ภาพถ่ายดาวเทียมแสดงพื้นผิวโลกจากมุมมองด้านบน`, true, `ภาพบันทึกจากด้านบน จึงเห็นการกระจายตัวของสิ่งต่างๆ บนพื้นที่กว้างได้`, 1],
+[`โดรนใช้ถ่ายภาพทางอากาศได้`, true, `โดรนบินต่ำ จึงได้ภาพรายละเอียดสูงในพื้นที่เล็กๆ`, 1],
+[`ภาพถ่ายทางอากาศใช้ช่วยจัดทำแผนที่ได้`, true, `ภาพถ่ายใช้เป็นฐานในการทำแผนที่ภูมิประเทศ`, 1],
+[`ในภาพสีธรรมชาติ แหล่งน้ำลึกมักปรากฏเป็นสีเข้ม`, true, `น้ำดูดกลืนแสงมาก สะท้อนกลับน้อย จึงดูเข้ม`, 1],
+[`ภาพถ่ายทางอากาศแนวเฉียง (Oblique) ถ่ายโดยให้แกนกล้องตั้งฉากกับพื้นดิน`, false, `ภาพแนวเฉียงถ่ายโดยเอียงกล้อง ส่วนภาพที่แกนกล้องตั้งฉากกับพื้นดินคือภาพแนวดิ่ง`, 2],
+[`ภาพถ่ายทางอากาศคู่ที่ซ้อนเหลื่อมกันใช้มองเป็นภาพสามมิติได้`, true, `ภาพคู่สเตอริโอทำให้เห็นความสูงต่ำของภูมิประเทศ`, 2],
+[`ในภาพขาวดำ พื้นผิวที่สะท้อนแสงมากมักปรากฏเป็นโทนสว่าง`, true, `ยิ่งสะท้อนแสงมาก โทนภาพยิ่งสว่าง`, 2],
+[`ดาวเทียมวงโคจรผ่านขั้วโลก (Polar orbit) โคจรผ่านเหนือขั้วโลกทั้งสอง`, true, `ขณะที่โลกหมุน ดาวเทียมจึงสแกนได้ครอบคลุมเกือบทั่วโลก`, 2],
+[`ความละเอียดเชิงพื้นที่ 30 เมตร หมายถึงหนึ่งพิกเซลแทนพื้นที่ประมาณ 30 × 30 เมตร`, true, `ขนาดของพิกเซลบอกความละเอียดเชิงพื้นที่`, 2],
+[`ภาพถ่ายดาวเทียมช่วยติดตามจุดความร้อน (Hotspot) เพื่อเฝ้าระวังไฟป่าได้`, true, `เซนเซอร์ตรวจพบพื้นที่ที่อุณหภูมิสูงผิดปกติ`, 2],
+[`พื้นที่เมืองในภาพถ่ายทางอากาศมักมีรูปแบบสม่ำเสมอ เช่น ถนนเป็นตารางและอาคารเรียงเป็นแถว`, true, `รูปแบบ (Pattern) เป็นองค์ประกอบหนึ่งของการแปลความหมายภาพ`, 2],
+[`การแปลความหมายภาพไม่จำเป็นต้องตรวจสอบกับพื้นที่จริง`, false, `ควรตรวจสอบภาคสนามหรือข้อมูลอื่นประกอบ เพื่อยืนยันความถูกต้อง`, 2],
+[`ภาพถ่ายดาวเทียมประเมินพื้นที่เสียหายหลังน้ำท่วมในพื้นที่กว้างได้เร็วกว่าการสำรวจภาคพื้นดิน`, true, `ครอบคลุมพื้นที่กว้างและเข้าถึงพื้นที่ที่เดินทางลำบากได้`, 2],
+[`รังสีอินฟราเรดมองเห็นได้ด้วยตาเปล่าโดยตรง`, false, `อินฟราเรดอยู่นอกช่วงที่ตามนุษย์มองเห็น ต้องแปลงเป็นสีในภาพจึงจะเห็น`, 2],
+[`ในภาพสีธรรมชาติ ถนนลาดยางมักปรากฏเป็นสีเทาเข้ม`, true, `สีและโทนภาพช่วยจำแนกวัตถุได้`, 2],
+[`ภาพออร์โทโฟโต (Orthophoto) ปรับแก้ความคลาดเคลื่อนจากความสูงต่ำของภูมิประเทศแล้ว จึงวัดระยะได้ใกล้เคียงแผนที่`, true, `ผ่านการปรับแก้เชิงเรขาคณิตให้มาตราส่วนสม่ำเสมอ`, 3],
+[`ในภาพถ่ายทางอากาศ วัตถุสูงที่อยู่ห่างจุดกึ่งกลางภาพจะดูล้มออกจากจุดกึ่งกลางภาพ`, true, `เรียกว่าการเคลื่อนที่เนื่องจากความสูง (Relief displacement)`, 3],
+[`ดัชนีพืชพรรณ NDVI คำนวณจากการสะท้อนช่วงแสงสีแดงและอินฟราเรดใกล้`, true, `พืชสุขภาพดีดูดกลืนแสงแดงมากแต่สะท้อนอินฟราเรดใกล้มาก ค่า NDVI จึงสูง`, 3],
+[`ค่า NDVI ต่ำมากหรือติดลบมักพบบริเวณแหล่งน้ำ`, true, `น้ำดูดกลืนอินฟราเรดใกล้ ทำให้ค่า NDVI ต่ำ`, 3],
+[`ดาวเทียมเรดาร์ (SAR) ต้องอาศัยแสงอาทิตย์จึงบันทึกภาพได้`, false, `SAR ส่งคลื่นไมโครเวฟของตัวเอง ใช้ได้ทั้งกลางคืนและทะลุเมฆ`, 3],
+[`ความละเอียดเชิงเวลา (Temporal resolution) คือความถี่ที่ดาวเทียมกลับมาถ่ายพื้นที่เดิม`, true, `ใช้ติดตามการเปลี่ยนแปลงที่เกิดบ่อย เช่น พืชผลและน้ำท่วม`, 3],
+[`ภาพที่มีความละเอียดเชิงพื้นที่สูงขึ้นมักครอบคลุมพื้นที่ต่อหนึ่งภาพกว้างขึ้นเสมอ`, false, `มักตรงกันข้าม ภาพละเอียดสูงมักครอบคลุมพื้นที่แคบกว่า`, 3],
+[`GIS ซ้อนทับชั้นข้อมูล เช่น ภาพดาวเทียม ความลาดชัน และเส้นทางน้ำ เพื่อวิเคราะห์พื้นที่เสี่ยงดินถล่มได้`, true, `การซ้อนทับ (Overlay) เป็นเครื่องมือหลักในการวิเคราะห์ข้อมูลเชิงพื้นที่`, 3],
+[`การจำแนกประเภทภาพแบบกำกับดูแล (Supervised classification) ต้องมีพื้นที่ตัวอย่างที่ผู้วิเคราะห์กำหนดไว้ก่อน`, true, `ใช้พื้นที่ตัวอย่างฝึกโปรแกรมให้จำแนกพื้นที่ส่วนที่เหลือ`, 3],
+[`ใช้ภาพดาวเทียมเพียงภาพเดียวก็สรุปแนวโน้มการเปลี่ยนแปลงของพื้นที่ได้`, false, `ต้องใช้ภาพอย่างน้อยสองช่วงเวลามาเปรียบเทียบกัน`, 3]
+];
+const LV0 = [1,1,2,2,2,1,1,2,2,1,3,1,1,1,2,3,1,2,1];
+QUESTIONS.forEach((q, i) => q[3] = LV0[i]);
+QUESTIONS.push(...MORE);
+let PLAN = [1,1,1,2,2,2,2,3,3,3]; // ระดับความยากของแต่ละรอบ
+const LVN = {1: "🟢 ระดับง่าย", 2: "🟡 ระดับปานกลาง", 3: "🔴 ระดับยาก"};
+const ORIG = QUESTIONS.slice(), PLAN0 = PLAN.slice();
+let ROUNDS = PLAN.length, TIME = 10;
+const COLORS = ["var(--p1)", "var(--p2)", "var(--p3)", "var(--p4)"];
+const LOGO = `<svg width='120' height='96' viewBox='0 0 120 96' aria-hidden='true'><circle cx='56' cy='54' r='34' fill='url(#eg)'/><path fill='#66bb6a' d='M38 42q10-10 22-4q6 8-4 14q-12 4-18-10zM62 66q12-6 16 4q-2 12-14 10z'/><ellipse cx='56' cy='54' rx='50' ry='15' fill='none' stroke='#ff7043' stroke-width='3' stroke-dasharray='7 5' transform='rotate(-22 56 54)'/><g transform='translate(98 22) rotate(-25)'><rect x='-6' y='-5' width='12' height='10' rx='2' fill='#ffca28' stroke='#f57c00'/><rect x='-26' y='-4' width='18' height='8' fill='#29b6f6' stroke='#0277bd'/><rect x='8' y='-4' width='18' height='8' fill='#29b6f6' stroke='#0277bd'/></g></svg>`;
+const ppl = n => `<svg width='${n * 22 + 4}' height='24' viewBox='0 0 ${n * 22 + 4} 24' aria-hidden='true'>` + [...Array(n).keys()].map(i => `<circle cx='${13 + i * 22}' cy='7' r='5' fill='#fff'/><path d='M${3 + i * 22} 22a10 10 0 0 1 20 0z' fill='#fff'/>`).join('') + `</svg>`;
+const $ = s => document.querySelector(s);
+const app = $("#app");
+let S = null, timer = null;
+
+function menu() {
+  clearInterval(timer);
+  document.documentElement.classList.add("home");
+  app.innerHTML = `<div class="home-wrap"><div class="stage">
+  <button class="hot" onclick="start(cfg.players)" aria-label="เริ่มเกม"></button>
+  <button class="gear" onclick="settings()">⚙️ ตั้งค่า<small style="display:block;font-size:.55em;font-weight:600">${cfg.players} คน · ${TIME} วินาที</small></button></div></div>`;
+  const st = $(".stage"), u = (getComputedStyle(st).backgroundImage.match(/url\(["']?(.*?)["']?\)/) || [])[1];
+  if (u) { const im = new Image(); im.onerror = () => st.classList.add("noimg"); im.src = u; }
+}
+
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function deal(n) {
+  const pick = () => { const d = []; for (const lv of [1, 2, 3]) { const need = PLAN.filter(x => x === lv).length; d.push(...shuffle(QUESTIONS.filter(q => q[3] === lv)).slice(0, need)); } return d; };
+  const decks = [...Array(n).keys()].map(pick);
+  for (let r = 0; r < ROUNDS; r++) for (let p = 1; p < n; p++) {
+    const used = decks.slice(0, p).map(d => d[r]);
+    if (!used.includes(decks[p][r])) continue;
+    const k = decks[p].findIndex((q, j) => j > r && PLAN[j] === PLAN[r] && !used.includes(q));
+    if (k > -1) [decks[p][r], decks[p][k]] = [decks[p][k], decks[p][r]];
+    else { const alt = QUESTIONS.find(q => q[3] === PLAN[r] && !used.includes(q) && !decks[p].includes(q)); if (alt) decks[p][r] = alt; }
+  }
+  return decks;
+}
+
+function start(n) {
+  document.documentElement.classList.remove("home");
+  TIME = cfg.time;
+  const decks = deal(n);
+  S = { n, decks, qs: decks[0], i: 0, score: Array(n).fill(0), correct: Array(n).fill(0) };
+  show();
+}
+
+function show() {
+  const q = S.qs[S.i];
+  S.ans = Array(S.n).fill(null); S.done = false; S.t0 = Date.now(); S.ls = 0;
+  const pl = [...Array(S.n).keys()].map(p => `<div class="pl" style="--c:${COLORS[p]}">
+    <h3>${esc(cfg.names[p]) || (S.n > 1 ? "ผู้เล่น " + (p + 1) : "คำตอบของคุณ")} · <span id="sc${p}">${S.score[p]}</span></h3>
+    <div class="pq">${S.decks[p][S.i][0]}</div><div class="row"><button class="yes" id="y${p}" onclick="answer(${p},true)">✔ ใช่</button><button class="no" id="n${p}" onclick="answer(${p},false)">✖ ไม่</button></div>
+    <div class="st" id="st${p}"></div><div id="res${p}"></div></div>`).join("");
+  app.innerHTML = `<div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>ข้อ ${S.i + 1}/${S.qs.length} · ${LVN[PLAN[S.i]]}</span><span id="tl">${TIME}</span></div>
+  <div class="bar"><i id="bar"></i></div>
+  
+  <div class="players n${S.n}">${pl}</div><div id="res"></div>`;
+  clearInterval(timer);
+  timer = setInterval(tick, 100);
+}
+
+function left() { return Math.max(0, TIME - (Date.now() - S.t0) / 1000); }
+
+function tick() {
+  const l = left();
+  $("#bar").style.width = (l / TIME * 100) + "%";
+  $("#tl").textContent = Math.ceil(l);
+  const c = Math.ceil(l); if (c > 0 && c <= 3 && c !== S.ls) { S.ls = c; beep(SND.tick); }
+  if (l <= 0) reveal();
+}
+
+function answer(p, a) {
+  if (S.done || S.ans[p]) return;
+  S.ans[p] = { a, left: left() };
+  $("#y" + p).disabled = $("#n" + p).disabled = true;
+  $("#st" + p).textContent = "ตอบแล้ว ✓";
+  if (S.ans.every(Boolean)) reveal();
+}
+
+function reveal() {
+  if (S.done) return;
+  S.done = true; clearInterval(timer);
+  const qq = p => S.decks[p][S.i];
+  S.ans.forEach((r, p) => {
+    $("#y" + p).disabled = $("#n" + p).disabled = true;
+    let msg;
+    if (!r) msg = `<span class="bad">หมดเวลา +0</span>`;
+    else if (r.a === qq(p)[1]) { const pts = 50 + 50 * PLAN[S.i] + Math.ceil(r.left) * 10; S.score[p] += pts; S.correct[p]++; msg = `<span class="ok">ถูก +${pts}</span>`; }
+    else msg = `<span class="bad">ผิด +0</span>`;
+    $("#st" + p).innerHTML = msg;
+    $("#sc" + p).textContent = S.score[p];
+  });
+  beep(S.ans.some((r, p) => r && r.a === qq(p)[1]) ? SND.ok : SND.bad);
+  const last = S.i === S.qs.length - 1;
+  S.ans.forEach((r, p) => { const q = qq(p); $("#res" + p).innerHTML = `<p class="ans" style="color:${q[1] ? "var(--yes)" : "var(--no)"}">เฉลย: ${q[1] ? "ใช่" : "ไม่ใช่"}</p><p class="muted">${q[2]}</p>`; });
+  $("#res").innerHTML = `
+    <button onclick="next()" style="width:100%">${last ? "ดูผลสรุป" : "ข้อต่อไป"}</button>`;
+}
+
+function next() { S.i++; S.i < S.qs.length ? show() : finish(); }
+
+function finish() {
+  beep(SND.win);
+  saveScores();
+  const order = [...Array(S.n).keys()].sort((a, b) => S.score[b] - S.score[a]);
+  const tie = S.n > 1 && S.score[order[0]] === S.score[order[1]];
+  const head = S.n === 1 ? "จบเกม!" : tie ? "เสมอกัน! 🤝" : `${esc(cfg.names[order[0]]) || "ผู้เล่น " + (order[0] + 1)} ชนะ! 🏆`;
+  app.innerHTML = `<h1>${head}</h1><div class="card">${order.map((p, k) => `<div class="rank" style="color:${COLORS[p]}">
+    <span>${k + 1}. ${esc(cfg.names[p]) || (S.n > 1 ? "ผู้เล่น " + (p + 1) : "คะแนนของคุณ")}</span><span>${S.score[p]} คะแนน · ถูก ${S.correct[p]}/${S.qs.length}</span></div>`).join("")}</div>
+    <div class="menu"><button onclick="start(${S.n})">เล่นอีกครั้ง</button>${GAS ? '<button onclick="board()" style="background:var(--p2)">🏆 กระดานคะแนน</button>' : ""}<button onclick="menu()" style="background:var(--muted)">🏠 กลับหน้าหลัก</button></div>`;
+}
+const cfg = Object.assign({names: ["", "", "", ""], players: 2, time: 10, font: 100, theme: "auto", bg: true, sound: true, vol: 60}, (() => { try { return JSON.parse(localStorage.getItem("gq_cfg")) || {}; } catch (e) { return {}; } })());
+let bankName = "ชุดเริ่มต้น", msg = "", AC = null;
+const SND = {ok: [[660, .15], [880, .25, .12]], bad: [[220, .3], [165, .35, .15]], tick: [[1000, .06]], win: [[523, .15], [659, .15, .15], [784, .15, .3], [1047, .4, .45]]};
+function beep(seq) {
+  if (!cfg.sound || cfg.vol <= 0) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    seq.forEach(([f, d, t = 0]) => { const o = AC.createOscillator(), g = AC.createGain(), s = AC.currentTime + t;
+      o.frequency.value = f; g.gain.setValueAtTime(cfg.vol / 100 * .3, s); g.gain.exponentialRampToValueAtTime(.001, s + d);
+      o.connect(g); g.connect(AC.destination); o.start(s); o.stop(s + d); });
+  } catch (e) {}
+}
+function save() { try { localStorage.setItem("gq_cfg", JSON.stringify(cfg)); } catch (e) {} }
+function apply() {
+  const h = document.documentElement; h.style.fontSize = cfg.font + "%";
+  cfg.theme === "auto" ? h.removeAttribute("data-theme") : h.setAttribute("data-theme", cfg.theme);
+  h.classList.toggle("nobg", !cfg.bg); TIME = cfg.time;
+}
+function set(k, v) { cfg[k] = v; save(); apply(); settings(); }
+function setBank(out, store = true) {
+  if (store) out = out.map(q => [esc(q[0]), q[1], esc(q[2]), q[3]]);
+  if (out.some(q => !q[3])) out.forEach(q => q[3] = 2);
+  const N = out.length, R = Math.min(10, N), lvs = out.map(q => q[3]).sort();
+  PLAN = Array.from({length: R}, (_, i) => lvs[Math.floor((i + .5) * N / R)]);
+  QUESTIONS = out; ROUNDS = R; bankName = "นำเข้าจากไฟล์";
+  if (store) try { localStorage.setItem("gq_bank", JSON.stringify(out)); } catch (e) {}
+}
+function resetBank() {
+  QUESTIONS = ORIG.slice(); PLAN = PLAN0.slice(); ROUNDS = PLAN.length; bankName = "ชุดเริ่มต้น"; msg = "กลับไปใช้ชุดคำถามเริ่มต้นแล้ว";
+  try { localStorage.removeItem("gq_bank"); } catch (e) {}
+  settings();
+}
+function importFile(f) {
+  if (!f) return;
+  if (typeof XLSX === "undefined") { msg = "โหลดตัวอ่าน Excel ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่"; settings(); return; }
+  const csv = /\.csv$/i.test(f.name), rd = new FileReader();
+  rd.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type: csv ? "string" : "array"});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, defval: ""});
+      const T = ["ใช่", "true", "t", "yes", "y", "1", "จริง", "ถูก"], F = ["ไม่", "ไม่ใช่", "false", "f", "no", "n", "0", "เท็จ", "ผิด"];
+      const out = []; let skip = 0;
+      rows.forEach((r, i) => {
+        const q = String(r[0] || "").trim(), a = String(r[1] === undefined ? "" : r[1]).trim().toLowerCase();
+        const ans = T.includes(a) ? true : F.includes(a) ? false : null;
+        if (!q || ans === null) { if (i > 0 && (q || a)) skip++; return; }
+        const lv = parseInt(r[3]);
+        out.push([q, ans, String(r[2] || "").trim() || (ans ? "คำตอบคือ ใช่" : "คำตอบคือ ไม่ใช่"), [1, 2, 3].includes(lv) ? lv : 0]);
+      });
+      if (out.length < 4) msg = "นำเข้าไม่สำเร็จ: ต้องมีอย่างน้อย 4 ข้อที่รูปแบบถูกต้อง (พบ " + out.length + " ข้อ)";
+      else { setBank(out); msg = "นำเข้าสำเร็จ " + out.length + " ข้อ" + (skip ? " (ข้าม " + skip + " แถวที่รูปแบบไม่ถูกต้อง)" : ""); }
+    } catch (err) { msg = "อ่านไฟล์ไม่ได้ กรุณาใช้ไฟล์ .xlsx .xls หรือ .csv"; }
+    settings();
+  };
+  csv ? rd.readAsText(f, "UTF-8") : rd.readAsArrayBuffer(f);
+}
+const qv = v => typeof v === "string" ? `'${v}'` : v;
+const seg = (k, opts) => `<div class="seg">${opts.map(([v, t]) => `<button class="${cfg[k] === v ? "on" : ""}" onclick="set('${k}',${qv(v)})">${t}</button>`).join("")}</div>`;
+
+function settings() {
+  clearInterval(timer); document.documentElement.classList.remove("home");
+  app.innerHTML = `<div class="set">
+  <div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>⚙️ ตั้งค่า</span><span></span></div>
+  <div class="card" style="--c:#2563eb"><h2>👥 จำนวนผู้เล่น</h2>${seg("players", [[1, "1 คน"], [2, "2 คน"], [3, "3 คน"], [4, "4 คน"]])}
+    <div class="lab">ชื่อผู้เล่น (ไม่บังคับ)</div>${[0, 1, 2, 3].slice(0, cfg.players).map(i => `<input type="text" class="nm" maxlength="30" placeholder="ผู้เล่น ${i + 1}" value="${esc(cfg.names[i] || "")}" onchange="cfg.names[${i}]=this.value.trim();save()">`).join("")}</div>
+  <div class="card" style="--c:#e07a1f"><h2>⏱️ เวลาต่อข้อ</h2>${seg("time", [[5, "5 วิ"], [10, "10 วิ"], [15, "15 วิ"], [20, "20 วิ"], [30, "30 วิ"]])}
+    <div class="lab">กำหนดเอง (3-120 วินาที)</div>
+    <input type="number" min="3" max="120" value="${cfg.time}" onchange="set('time',Math.max(3,Math.min(120,Math.round(+this.value)||10)))"> วินาที</div>
+  <div class="card" style="--c:#1b9e5a"><h2>📥 นำเข้าข้อสอบจากไฟล์ Excel</h2>
+    <p class="muted">ชุดคำถามตอนนี้: <b>${bankName}</b> · ${QUESTIONS.length} ข้อ · เล่นรอบละ ${ROUNDS} ข้อ</p>
+    <input type="file" accept=".xlsx,.xls,.csv" onchange="importFile(this.files[0])">
+    <div class="msg">${msg}</div>
+    <div class="lab">รูปแบบไฟล์ (อ่านจากแผ่นงานแรก แถวหัวตารางจะถูกข้ามอัตโนมัติ)</div>
+    <table class="fmt"><tr><th>A ข้อความคำถาม</th><th>B คำตอบ (ใช่/ไม่)</th><th>C คำอธิบาย (ไม่บังคับ)</th><th>D ระดับ 1-3 (ไม่บังคับ)</th></tr>
+    <tr><td>ภาพถ่ายดาวเทียมใช้ติดตามพายุได้</td><td>ใช่</td><td>ดาวเทียมช่วยเฝ้าระวังภัยพิบัติ</td><td>1</td></tr></table>
+    <p class="muted">คำตอบรับ ใช่/ไม่, จริง/เท็จ, true/false, 1/0 ต้องมีอย่างน้อย 4 ข้อ ถ้าไม่ระบุระดับ ทุกข้อจะเป็นระดับปานกลาง · ไฟล์ .csv ต้องบันทึกเป็น UTF-8</p>
+    ${GAS ? '<button onclick="reloadSheet()" style="background:#1b9e5a">🔄 โหลดคำถามจาก Google Sheet</button> <button onclick="board()" style="background:var(--p2)">🏆 กระดานคะแนน</button> ' : ""}<button onclick="resetBank()" style="background:var(--muted)">ใช้ชุดคำถามเริ่มต้น</button></div>
+  <div class="card" style="--c:#8b3fd1"><h2>🎨 การแสดงผล</h2>
+    <div class="lab">ขนาดตัวอักษร</div>${seg("font", [[100, "ปกติ"], [115, "ใหญ่"], [130, "ใหญ่มาก"]])}
+    <div class="lab">ธีม</div>${seg("theme", [["auto", "ตามอุปกรณ์"], ["light", "สว่าง"], ["dark", "มืด"]])}
+    <div class="lab">ภาพพื้นหลังหน้าคำถาม</div>${seg("bg", [[true, "แสดง"], [false, "ซ่อน"]])}</div>
+  <div class="card" style="--c:#d6336c"><h2>🔊 เสียง</h2>${seg("sound", [[true, "เปิด"], [false, "ปิด"]])}
+    <div class="lab">ระดับเสียง ${cfg.vol}%</div>
+    <input type="range" min="0" max="100" value="${cfg.vol}" onchange="set('vol',+this.value);beep(SND.ok)"></div>
+  <div class="menu"><button onclick="start(cfg.players)">▶ เริ่มเล่น</button></div></div>`;
+}
+const API_URL = "https://script.google.com/macros/s/AKfycbzBQP3cFKa9kTxcvx3BsPbjcJJ07JgH5RuwNhNGOddKxptMpbE5UrDcVrdMIS5iHjX1/exec"; // ใส่ URL ของ Apps Script Web App (/exec) ถ้าเว้นว่างเกมจะทำงานแบบ standalone
+const GAS = (typeof google !== "undefined" && google.script && google.script.run) ? "gas" : API_URL ? "api" : "";
+const unwrap = j => { if (!j || j.error) throw new Error((j && j.error) || "ไม่มีข้อมูลตอบกลับ"); return j.data; };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+function gas(fn, ...args) {
+  if (GAS === "gas") return new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no)[fn](...args));
+  const get = q => fetch(API_URL + "?" + q).then(r => r.json()).then(unwrap);
+  if (fn === "getQuestions") return get("action=questions");
+  if (fn === "getLeaderboard") return get("action=leaderboard&limit=" + (args[0] || 10));
+  return fetch(API_URL, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(args[0])}).then(r => r.json()).then(unwrap);
+}
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 3500); }
+async function reloadSheet(silent) {
+  try {
+    const rows = await gas("getQuestions");
+    if (rows.length < 4) throw new Error("ต้องมีอย่างน้อย 4 ข้อ (พบ " + rows.length + ")");
+    setBank(rows); bankName = "Google Sheet"; msg = "โหลดจาก Google Sheet สำเร็จ " + rows.length + " ข้อ";
+  } catch (e) { msg = "โหลดจาก Google Sheet ไม่สำเร็จ: " + (e.message || e); }
+  if (!silent) settings();
+}
+function saveScores() {
+  if (!GAS) return;
+  const players = [...Array(S.n).keys()].map(p => ({name: cfg.names[p] || "ผู้เล่น " + (p + 1), score: S.score[p], correct: S.correct[p]}));
+  gas("saveResult", {n: S.n, time: TIME, total: S.qs.length, players}).then(() => toast("บันทึกคะแนนลง Google Sheet แล้ว ✓")).catch(() => toast("บันทึกคะแนนไม่สำเร็จ"));
+}
+async function board() {
+  clearInterval(timer); document.documentElement.classList.remove("home");
+  app.innerHTML = `<div class="set"><div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>🏆 กระดานคะแนน</span><span></span></div><div class="card" style="--c:#e07a1f"><h2>10 อันดับสูงสุด</h2><div id="lb">กำลังโหลด...</div></div></div>`;
+  try {
+    const r = await gas("getLeaderboard", 10);
+    $("#lb").innerHTML = r.length ? `<table class="fmt"><tr><th>#</th><th>ชื่อ</th><th>คะแนน</th><th>ถูก</th><th>วันที่</th></tr>${r.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.name)}</td><td>${x.score}</td><td>${x.correct}/${x.total}</td><td>${esc(x.date)}</td></tr>`).join("")}</table>` : "ยังไม่มีข้อมูล";
+  } catch (e) { $("#lb").textContent = "โหลดไม่สำเร็จ: " + (e.message || e); }
+}
+try { const b = JSON.parse(localStorage.getItem("gq_bank") || "null"); if (b && b.length >= 4) setBank(b, false); } catch (e) {}
+apply();
+menu();
+if (GAS) reloadSheet(true).then(() => { if (document.documentElement.classList.contains("home")) menu(); });
+</script>
+</body>
+</html>
