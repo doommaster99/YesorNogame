@@ -104,6 +104,12 @@ html.nobg:not(.home){background:var(--bg);background-image:none}
 .ctl button{flex:1;padding:16px;font-size:1.2rem;box-shadow:0 4px 12px rgba(0,0,0,.25)}
 .ctl .rv{background:linear-gradient(135deg,#ff9f1c,#ff4d8d)}
 .ctl .sk{background:linear-gradient(135deg,#6c5ce7,#2563eb)}
+.mctl{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center;background:rgba(255,255,255,.92);color:#14213d;padding:12px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.mctl button{padding:14px 18px;font-size:1.1rem}
+.mctl .bk{background:#64748b}.mctl .rv{background:linear-gradient(135deg,#ff9f1c,#ff4d8d);flex:1}.mctl .nx{background:linear-gradient(135deg,#1b9e5a,#2563eb)}
+.tset{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;font-weight:700}
+.tset input{width:110px;padding:10px;font:inherit;font-size:1.1rem;border-radius:8px;border:2px solid #2563eb;background:#fff;color:#14213d}
+.tset button{padding:10px 14px;font-size:1rem}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9B%B0%EF%B8%8F%3C/text%3E%3C/svg%3E">
@@ -177,11 +183,11 @@ const app = $("#app");
 let S = null, timer = null;
 
 function menu() {
-  clearInterval(timer);
+  clearInterval(timer); TIME = cfg.time;
   document.documentElement.classList.add("home");
   app.innerHTML = `<div class="home-wrap"><div class="stage">
   <button class="hot" onclick="start(cfg.players)" aria-label="เริ่มเกม"></button>
-  <button class="gear" onclick="settings()">⚙️ ตั้งค่า<small style="display:block;font-size:.55em;font-weight:600">${cfg.players} คน · ${TIME} วินาที</small></button></div></div>`;
+  <button class="gear" onclick="settings()">⚙️ ตั้งค่า<small style="display:block;font-size:.55em;font-weight:600">${cfg.players} คน · ${TIME ? TIME + " วินาที" : "ไม่จำกัดเวลา"}${cfg.mode === "manual" ? " · Manual" : ""}</small></button></div></div>`;
   const st = $(".stage"), u = (getComputedStyle(st).backgroundImage.match(/url\(["']?(.*?)["']?\)/) || [])[1];
   if (u) { const im = new Image(); im.onerror = () => st.classList.add("noimg"); im.src = u; }
 }
@@ -205,66 +211,109 @@ function start(n) {
   document.documentElement.classList.remove("home");
   TIME = cfg.time;
   const decks = deal(n);
-  S = { n, decks, qs: decks[0], i: 0, score: Array(n).fill(0), correct: Array(n).fill(0) };
+  S = { n, decks, qs: decks[0], i: 0, score: Array(n).fill(0), correct: Array(n).fill(0), rec: {}, qt: {}, manual: cfg.mode === "manual" };
   show();
 }
 
-function show() {
-  const q = S.qs[S.i];
-  S.ans = Array(S.n).fill(null); S.done = false; S.t0 = Date.now(); S.ls = 0;
-  const pl = [...Array(S.n).keys()].map(p => `<div class="pl" style="--c:${COLORS[p]}">
-    <h3>${esc(cfg.names[p]) || (S.n > 1 ? "ผู้เล่น " + (p + 1) : "คำตอบของคุณ")} · <span id="sc${p}">${S.score[p]}</span></h3>
-    <div class="pq">${S.decks[p][S.i][0]}</div><div class="row"><button class="yes" id="y${p}" onclick="answer(${p},true)">✔ ใช่</button><button class="no" id="n${p}" onclick="answer(${p},false)">✖ ไม่</button></div>
-    <div class="st" id="st${p}"></div><div id="res${p}"></div></div>`).join("");
-  app.innerHTML = `<div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>ข้อ ${S.i + 1}/${S.qs.length} · ${LVN[PLAN[S.i]]}</span><span id="tl">${TIME}</span></div>
-  <div class="bar"><i id="bar"></i></div>
-  
-  <div class="players n${S.n}">${pl}</div><div id="res"><div class="ctl"><button class="rv" onclick="reveal()">💡 กดเฉลย</button><button class="sk" onclick="skipQ()">⏭️ ข้ามเฉลย</button></div></div>`;
-  clearInterval(timer);
-  timer = setInterval(tick, 100);
+const pn = p => ((typeof esc === "function" && cfg.names) ? esc(cfg.names[p]) : "") || (S.n > 1 ? "ผู้เล่น " + (p + 1) : "คำตอบของคุณ");
+
+function mctl() {
+  const d = S.done ? "disabled" : "";
+  return `<div class="mctl">
+  <button class="bk" onclick="prev()" ${S.i === 0 ? "disabled" : ""}>◀ ย้อนกลับ</button>
+  <button class="rv" id="rvb" onclick="reveal()" ${d}>💡 กดเฉลย</button>
+  <button class="nx" onclick="next()">${S.i === S.qs.length - 1 ? "จบเกม ▶" : "ข้อต่อไป ▶"}</button>
+  <div class="tset">⏱️ เวลาข้อนี้ <input type="number" id="qt" min="3" max="600" placeholder="ไม่กำหนด" value="${TIME || ""}" ${d}> วินาที
+  <button onclick="setQT()" ${d}>ตั้งเวลา</button><button onclick="setQT(0)" ${d}>ไม่กำหนด</button></div></div>`;
 }
 
-function left() { return Math.max(0, TIME - (Date.now() - S.t0) / 1000); }
+function show() {
+  const rec = S.rec && S.rec[S.i];
+  TIME = (S.manual && S.qt[S.i] !== undefined) ? S.qt[S.i] : cfg.time;
+  S.ans = Array(S.n).fill(null); S.done = !!rec; S.locked = false; S.t0 = Date.now(); S.ls = 0;
+  const pl = [...Array(S.n).keys()].map(p => `<div class="pl" style="--c:${COLORS[p]}">
+    <h3>${pn(p)} · <span id="sc${p}">${S.score[p]}</span></h3>
+    <div class="pq">${S.decks[p][S.i][0]}</div><div class="row"><button class="yes" id="y${p}" onclick="answer(${p},true)">✔ ใช่</button><button class="no" id="n${p}" onclick="answer(${p},false)">✖ ไม่</button></div>
+    <div class="st" id="st${p}"></div><div id="res${p}"></div></div>`).join("");
+  const ctl = S.manual ? `<div id="res"></div>${mctl()}`
+    : `<div id="res"><div class="ctl"><button class="rv" onclick="reveal()">💡 กดเฉลย</button><button class="sk" onclick="skipQ()">⏭️ ข้ามเฉลย</button></div></div>`;
+  app.innerHTML = `<div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>ข้อ ${S.i + 1}/${S.qs.length} · ${LVN[PLAN[S.i]]}${S.manual ? " · Manual" : ""}</span><span id="tl">${TIME || "∞"}</span></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="players n${S.n}">${pl}</div>${ctl}`;
+  clearInterval(timer);
+  if (rec) { S.ans = rec.ans.slice(); paintReveal(rec); $("#tl").textContent = "เฉลยแล้ว"; $("#bar").style.width = "0%"; }
+  else timer = setInterval(tick, 100);
+}
+
+function left() { return TIME ? Math.max(0, TIME - (Date.now() - S.t0) / 1000) : 0; }
 
 function tick() {
+  if (!TIME) return;
   const l = left();
   $("#bar").style.width = (l / TIME * 100) + "%";
   $("#tl").textContent = Math.ceil(l);
   const c = Math.ceil(l); if (c > 0 && c <= 3 && c !== S.ls) { S.ls = c; beep(SND.tick); }
-  if (l <= 0) reveal();
+  if (l <= 0) {
+    if (!S.manual) return reveal();
+    clearInterval(timer); S.locked = true;
+    $("#tl").textContent = "หมดเวลา"; $("#bar").style.width = "0%";
+    S.ans.forEach((r, p) => { if (!r) { $("#y" + p).disabled = $("#n" + p).disabled = true; $("#st" + p).textContent = "หมดเวลา"; } });
+  }
+}
+
+function setQT(v) {
+  if (S.done) return;
+  v = v === undefined ? Math.round(+$("#qt").value) : v;
+  v = v ? Math.max(3, Math.min(600, v)) : 0;
+  S.qt[S.i] = v; TIME = v; S.t0 = Date.now(); S.ls = 0;
+  if (S.locked) { S.locked = false; S.ans.forEach((r, p) => { if (!r) { $("#y" + p).disabled = $("#n" + p).disabled = false; $("#st" + p).textContent = ""; } }); }
+  clearInterval(timer); timer = setInterval(tick, 100);
+  $("#tl").textContent = v || "∞"; $("#bar").style.width = "100%"; $("#qt").value = v || "";
 }
 
 function answer(p, a) {
-  if (S.done || S.ans[p]) return;
+  if (S.done || S.locked || S.ans[p]) return;
   S.ans[p] = { a, left: left() };
   $("#y" + p).disabled = $("#n" + p).disabled = true;
   $("#st" + p).textContent = "ตอบแล้ว ✓";
-  if (S.ans.every(Boolean)) reveal();
+  if (!S.manual && S.ans.every(Boolean)) reveal();
 }
 
 function reveal() {
   if (S.done) return;
   S.done = true; clearInterval(timer);
-  const qq = p => S.decks[p][S.i];
-  S.ans.forEach((r, p) => {
-    $("#y" + p).disabled = $("#n" + p).disabled = true;
-    let msg;
-    if (!r) msg = `<span class="bad">${left() > 0 ? "ไม่ได้ตอบ" : "หมดเวลา"} +0</span>`;
-    else if (r.a === qq(p)[1]) { const pts = 50 + 50 * PLAN[S.i] + Math.ceil(r.left) * 10; S.score[p] += pts; S.correct[p]++; msg = `<span class="ok">ถูก +${pts}</span>`; }
-    else msg = `<span class="bad">ผิด +0</span>`;
-    $("#st" + p).innerHTML = msg;
-    $("#sc" + p).textContent = S.score[p];
+  const timedOut = TIME && left() <= 0;
+  const msg = S.ans.map((r, p) => {
+    if (!r) return `<span class="bad">${timedOut ? "หมดเวลา" : "ไม่ได้ตอบ"} +0</span>`;
+    if (r.a === S.decks[p][S.i][1]) { const pts = 50 + 50 * PLAN[S.i] + Math.ceil(r.left) * 10; S.score[p] += pts; S.correct[p]++; return `<span class="ok">ถูก +${pts}</span>`; }
+    return `<span class="bad">ผิด +0</span>`;
   });
-  beep(S.ans.some((r, p) => r && r.a === qq(p)[1]) ? SND.ok : SND.bad);
+  S.rec[S.i] = { ans: S.ans.slice(), msg };
+  beep(S.ans.some((r, p) => r && r.a === S.decks[p][S.i][1]) ? SND.ok : SND.bad);
+  paintReveal(S.rec[S.i]);
+}
+
+function paintReveal(rec) {
   const last = S.i === S.qs.length - 1;
-  S.ans.forEach((r, p) => { const q = qq(p); $("#res" + p).innerHTML = `<p class="ans" style="color:${q[1] ? "var(--yes)" : "var(--no)"}">เฉลย: ${q[1] ? "ใช่" : "ไม่ใช่"}</p><p class="muted">${q[2]}</p>`; });
-  $("#res").innerHTML = `
-    <button onclick="next()" style="width:100%">${last ? "ดูผลสรุป" : "ข้อต่อไป"}</button>`;
+  rec.ans.forEach((r, p) => {
+    const q = S.decks[p][S.i];
+    $("#y" + p).disabled = $("#n" + p).disabled = true;
+    $("#st" + p).innerHTML = rec.msg[p];
+    $("#sc" + p).textContent = S.score[p];
+    $("#res" + p).innerHTML = `<p class="ans" style="color:${q[1] ? "var(--yes)" : "var(--no)"}">เฉลย: ${q[1] ? "ใช่" : "ไม่ใช่"}</p><p class="muted">${q[2]}</p>`;
+  });
+  $("#res").innerHTML = S.manual ? "" : `<button onclick="next()" style="width:100%">${last ? "ดูผลสรุป" : "ข้อต่อไป"}</button>`;
+  document.querySelectorAll(".mctl #rvb,.tset input,.tset button").forEach(b => b.disabled = true);
 }
 
 function skipQ() { if (S.done) return; S.done = true; clearInterval(timer); next(); }
 
-function next() { S.i++; S.i < S.qs.length ? show() : finish(); }
+function prev() { if (S.i > 0) { clearInterval(timer); S.i--; show(); } }
+
+function next() {
+  clearInterval(timer);
+  S.i++; S.i < S.qs.length ? show() : finish();
+}
 
 function finish() {
   beep(SND.win);
@@ -276,7 +325,7 @@ function finish() {
     <span>${k + 1}. ${esc(cfg.names[p]) || (S.n > 1 ? "ผู้เล่น " + (p + 1) : "คะแนนของคุณ")}</span><span>${S.score[p]} คะแนน · ถูก ${S.correct[p]}/${S.qs.length}</span></div>`).join("")}</div>
     <div class="menu"><button onclick="start(${S.n})">เล่นอีกครั้ง</button>${GAS ? '<button onclick="board()" style="background:var(--p2)">🏆 กระดานคะแนน</button>' : ""}<button onclick="menu()" style="background:var(--muted)">🏠 กลับหน้าหลัก</button></div>`;
 }
-const cfg = Object.assign({names: ["", "", "", ""], players: 2, time: 10, font: 100, theme: "auto", bg: true, sound: true, vol: 60}, (() => { try { return JSON.parse(localStorage.getItem("gq_cfg")) || {}; } catch (e) { return {}; } })());
+const cfg = Object.assign({names: ["", "", "", ""], players: 2, mode: "auto", time: 10, font: 100, theme: "auto", bg: true, sound: true, vol: 60}, (() => { try { return JSON.parse(localStorage.getItem("gq_cfg")) || {}; } catch (e) { return {}; } })());
 let bankName = "ชุดเริ่มต้น", msg = "", AC = null;
 const SND = {ok: [[660, .15], [880, .25, .12]], bad: [[220, .3], [165, .35, .15]], tick: [[1000, .06]], win: [[523, .15], [659, .15, .15], [784, .15, .3], [1047, .4, .45]]};
 function beep(seq) {
@@ -336,14 +385,15 @@ const qv = v => typeof v === "string" ? `'${v}'` : v;
 const seg = (k, opts) => `<div class="seg">${opts.map(([v, t]) => `<button class="${cfg[k] === v ? "on" : ""}" onclick="set('${k}',${qv(v)})">${t}</button>`).join("")}</div>`;
 
 function settings() {
-  clearInterval(timer); document.documentElement.classList.remove("home");
+  clearInterval(timer); TIME = cfg.time; document.documentElement.classList.remove("home");
   app.innerHTML = `<div class="set">
   <div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>⚙️ ตั้งค่า</span><span></span></div>
   <div class="card" style="--c:#2563eb"><h2>👥 จำนวนผู้เล่น</h2>${seg("players", [[1, "1 คน"], [2, "2 คน"], [3, "3 คน"], [4, "4 คน"]])}
     <div class="lab">ชื่อผู้เล่น (ไม่บังคับ)</div>${[0, 1, 2, 3].slice(0, cfg.players).map(i => `<input type="text" class="nm" maxlength="30" placeholder="ผู้เล่น ${i + 1}" value="${esc(cfg.names[i] || "")}" onchange="cfg.names[${i}]=this.value.trim();save()">`).join("")}</div>
-  <div class="card" style="--c:#e07a1f"><h2>⏱️ เวลาต่อข้อ</h2>${seg("time", [[5, "5 วิ"], [10, "10 วิ"], [15, "15 วิ"], [20, "20 วิ"], [30, "30 วิ"]])}
+  <div class="card" style="--c:#0ea5a4"><h2>🎮 โหมดการเล่น</h2>${seg("mode", [["auto", "อัตโนมัติ"], ["manual", "Manual (ครูควบคุม)"]])}<p class="muted">Manual: ย้อนกลับและข้ามไปข้อถัดไปได้ · ตั้งเวลาทีละข้อได้ · เฉลยด้วยตัวเอง (ไม่เฉลยอัตโนมัติทั้งเมื่อทุกคนตอบครบและเมื่อหมดเวลา ครูกดเฉลยเอง)</p></div>
+  <div class="card" style="--c:#e07a1f"><h2>⏱️ เวลาต่อข้อ</h2>${seg("time", [[5, "5 วิ"], [10, "10 วิ"], [15, "15 วิ"], [20, "20 วิ"], [30, "30 วิ"], [0, "ไม่กำหนด"]])}
     <div class="lab">กำหนดเอง (3-120 วินาที)</div>
-    <input type="number" min="3" max="120" value="${cfg.time}" onchange="set('time',Math.max(3,Math.min(120,Math.round(+this.value)||10)))"> วินาที</div>
+    <input type="number" min="3" max="120" placeholder="ไม่กำหนด" value="${cfg.time || ""}" onchange="set('time',Math.max(3,Math.min(120,Math.round(+this.value)||10)))"> วินาที</div>
   <div class="card" style="--c:#1b9e5a"><h2>📥 นำเข้าข้อสอบจากไฟล์ Excel</h2>
     <p class="muted">ชุดคำถามตอนนี้: <b>${bankName}</b> · ${QUESTIONS.length} ข้อ · เล่นรอบละ ${ROUNDS} ข้อ</p>
     <input type="file" accept=".xlsx,.xls,.csv" onchange="importFile(this.files[0])">
@@ -385,7 +435,7 @@ async function reloadSheet(silent) {
 function saveScores() {
   if (!GAS) return;
   const players = [...Array(S.n).keys()].map(p => ({name: cfg.names[p] || "ผู้เล่น " + (p + 1), score: S.score[p], correct: S.correct[p]}));
-  gas("saveResult", {n: S.n, time: TIME, total: S.qs.length, players}).then(() => toast("บันทึกคะแนนลง Google Sheet แล้ว ✓")).catch(() => toast("บันทึกคะแนนไม่สำเร็จ"));
+  gas("saveResult", {n: S.n, time: cfg.time, total: S.qs.length, players}).then(() => toast("บันทึกคะแนนลง Google Sheet แล้ว ✓")).catch(() => toast("บันทึกคะแนนไม่สำเร็จ"));
 }
 async function board() {
   clearInterval(timer); document.documentElement.classList.remove("home");
