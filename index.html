@@ -110,6 +110,9 @@ html.nobg:not(.home){background:var(--bg);background-image:none}
 .tset{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;font-weight:700}
 .tset input{width:110px;padding:10px;font:inherit;font-size:1.1rem;border-radius:8px;border:2px solid #2563eb;background:#fff;color:#14213d}
 .tset button{padding:10px 14px;font-size:1rem}
+.copy{font-size:.8rem;color:var(--muted);text-align:center;margin:18px 0 8px}
+.stage .copy{position:absolute;left:50%;bottom:.6%;transform:translateX(-50%);margin:0;padding:2px 12px;border-radius:999px;background:rgba(0,0,0,.5);color:#fff;font-size:max(.62rem,.85vw);white-space:nowrap}
+.set .copy{display:block;width:fit-content;margin:18px auto 8px;padding:4px 14px;border-radius:999px;background:rgba(255,255,255,.88);color:#14213d}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9B%B0%EF%B8%8F%3C/text%3E%3C/svg%3E">
@@ -180,14 +183,15 @@ const LOGO = `<svg width='120' height='96' viewBox='0 0 120 96' aria-hidden='tru
 const ppl = n => `<svg width='${n * 22 + 4}' height='24' viewBox='0 0 ${n * 22 + 4} 24' aria-hidden='true'>` + [...Array(n).keys()].map(i => `<circle cx='${13 + i * 22}' cy='7' r='5' fill='#fff'/><path d='M${3 + i * 22} 22a10 10 0 0 1 20 0z' fill='#fff'/>`).join('') + `</svg>`;
 const $ = s => document.querySelector(s);
 const app = $("#app");
-let S = null, timer = null;
+let S = null, timer = null, nt = null;
 
 function menu() {
-  clearInterval(timer); TIME = cfg.time;
+  clearInterval(timer); clearInterval(nt); TIME = cfg.time;
   document.documentElement.classList.add("home");
   app.innerHTML = `<div class="home-wrap"><div class="stage">
   <button class="hot" onclick="start(cfg.players)" aria-label="เริ่มเกม"></button>
-  <button class="gear" onclick="settings()">⚙️ ตั้งค่า<small style="display:block;font-size:.55em;font-weight:600">${cfg.players} คน · ${TIME ? TIME + " วินาที" : "ไม่จำกัดเวลา"}${cfg.mode === "manual" ? " · Manual" : ""}</small></button></div></div>`;
+  <button class="gear" onclick="settings()">⚙️ ตั้งค่า<small style="display:block;font-size:.55em;font-weight:600">${cfg.players} คน · ${TIME ? TIME + " วินาที" : "ไม่จำกัดเวลา"}${cfg.mode === "manual" ? " · Manual" : ""}</small></button>
+  <p class="copy">© 2026 อุดม นุพันธ์. สงวนลิขสิทธิ์ทุกประการ</p></div></div>`;
   const st = $(".stage"), u = (getComputedStyle(st).backgroundImage.match(/url\(["']?(.*?)["']?\)/) || [])[1];
   if (u) { const im = new Image(); im.onerror = () => st.classList.add("noimg"); im.src = u; }
 }
@@ -302,7 +306,9 @@ function paintReveal(rec) {
     $("#sc" + p).textContent = S.score[p];
     $("#res" + p).innerHTML = `<p class="ans" style="color:${q[1] ? "var(--yes)" : "var(--no)"}">เฉลย: ${q[1] ? "ใช่" : "ไม่ใช่"}</p><p class="muted">${q[2]}</p>`;
   });
-  $("#res").innerHTML = S.manual ? "" : `<button onclick="next()" style="width:100%">${last ? "ดูผลสรุป" : "ข้อต่อไป"}</button>`;
+  $("#res").innerHTML = S.manual ? "" : `<button onclick="next()" style="width:100%">${last ? "ดูผลสรุป" : "ข้อต่อไป (<span id='cd'>4</span>)"}</button>`;
+  clearInterval(nt);
+  if (!S.manual && !last) { let c = 4; nt = setInterval(() => { c--; const e = $("#cd"); if (e) e.textContent = c; if (c <= 0) { clearInterval(nt); next(); } }, 1000); }
   document.querySelectorAll(".mctl #rvb,.tset input,.tset button").forEach(b => b.disabled = true);
 }
 
@@ -311,7 +317,7 @@ function skipQ() { if (S.done) return; S.done = true; clearInterval(timer); next
 function prev() { if (S.i > 0) { clearInterval(timer); S.i--; show(); } }
 
 function next() {
-  clearInterval(timer);
+  clearInterval(timer); clearInterval(nt);
   S.i++; S.i < S.qs.length ? show() : finish();
 }
 
@@ -325,7 +331,7 @@ function finish() {
     <span>${k + 1}. ${esc(cfg.names[p]) || (S.n > 1 ? "ผู้เล่น " + (p + 1) : "คะแนนของคุณ")}</span><span>${S.score[p]} คะแนน · ถูก ${S.correct[p]}/${S.qs.length}</span></div>`).join("")}</div>
     <div class="menu"><button onclick="start(${S.n})">เล่นอีกครั้ง</button>${GAS ? '<button onclick="board()" style="background:var(--p2)">🏆 กระดานคะแนน</button>' : ""}<button onclick="menu()" style="background:var(--muted)">🏠 กลับหน้าหลัก</button></div>`;
 }
-const cfg = Object.assign({names: ["", "", "", ""], players: 2, mode: "auto", time: 10, font: 100, theme: "auto", bg: true, sound: true, vol: 60}, (() => { try { return JSON.parse(localStorage.getItem("gq_cfg")) || {}; } catch (e) { return {}; } })());
+const cfg = Object.assign({names: ["", "", "", ""], players: 2, mode: "auto", rounds: 10, time: 10, font: 100, theme: "auto", bg: true, sound: true, vol: 60}, (() => { try { return JSON.parse(localStorage.getItem("gq_cfg")) || {}; } catch (e) { return {}; } })());
 let bankName = "ชุดเริ่มต้น", msg = "", AC = null;
 const SND = {ok: [[660, .15], [880, .25, .12]], bad: [[220, .3], [165, .35, .15]], tick: [[1000, .06]], win: [[523, .15], [659, .15, .15], [784, .15, .3], [1047, .4, .45]]};
 function beep(seq) {
@@ -337,23 +343,26 @@ function beep(seq) {
       o.connect(g); g.connect(AC.destination); o.start(s); o.stop(s + d); });
   } catch (e) {}
 }
+function rebuildPlan() {
+  const N = QUESTIONS.length, R = Math.min(cfg.rounds || 10, N), lvs = QUESTIONS.map(q => q[3]).sort();
+  PLAN = Array.from({length: R}, (_, i) => lvs[Math.floor((i + .5) * N / R)]);
+  ROUNDS = R;
+}
 function save() { try { localStorage.setItem("gq_cfg", JSON.stringify(cfg)); } catch (e) {} }
 function apply() {
   const h = document.documentElement; h.style.fontSize = cfg.font + "%";
   cfg.theme === "auto" ? h.removeAttribute("data-theme") : h.setAttribute("data-theme", cfg.theme);
-  h.classList.toggle("nobg", !cfg.bg); TIME = cfg.time;
+  h.classList.toggle("nobg", !cfg.bg); TIME = cfg.time; rebuildPlan();
 }
 function set(k, v) { cfg[k] = v; save(); apply(); settings(); }
 function setBank(out, store = true) {
   if (store) out = out.map(q => [esc(q[0]), q[1], esc(q[2]), q[3]]);
   if (out.some(q => !q[3])) out.forEach(q => q[3] = 2);
-  const N = out.length, R = Math.min(10, N), lvs = out.map(q => q[3]).sort();
-  PLAN = Array.from({length: R}, (_, i) => lvs[Math.floor((i + .5) * N / R)]);
-  QUESTIONS = out; ROUNDS = R; bankName = "นำเข้าจากไฟล์";
+  QUESTIONS = out; bankName = "นำเข้าจากไฟล์"; rebuildPlan();
   if (store) try { localStorage.setItem("gq_bank", JSON.stringify(out)); } catch (e) {}
 }
 function resetBank() {
-  QUESTIONS = ORIG.slice(); PLAN = PLAN0.slice(); ROUNDS = PLAN.length; bankName = "ชุดเริ่มต้น"; msg = "กลับไปใช้ชุดคำถามเริ่มต้นแล้ว";
+  QUESTIONS = ORIG.slice(); bankName = "ชุดเริ่มต้น"; rebuildPlan(); msg = "กลับไปใช้ชุดคำถามเริ่มต้นแล้ว";
   try { localStorage.removeItem("gq_bank"); } catch (e) {}
   settings();
 }
@@ -385,12 +394,13 @@ const qv = v => typeof v === "string" ? `'${v}'` : v;
 const seg = (k, opts) => `<div class="seg">${opts.map(([v, t]) => `<button class="${cfg[k] === v ? "on" : ""}" onclick="set('${k}',${qv(v)})">${t}</button>`).join("")}</div>`;
 
 function settings() {
-  clearInterval(timer); TIME = cfg.time; document.documentElement.classList.remove("home");
+  clearInterval(timer); clearInterval(nt); TIME = cfg.time; document.documentElement.classList.remove("home");
   app.innerHTML = `<div class="set">
   <div class="top"><button class="home" onclick="menu()">🏠 หน้าหลัก</button><span>⚙️ ตั้งค่า</span><span></span></div>
   <div class="card" style="--c:#2563eb"><h2>👥 จำนวนผู้เล่น</h2>${seg("players", [[1, "1 คน"], [2, "2 คน"], [3, "3 คน"], [4, "4 คน"]])}
     <div class="lab">ชื่อผู้เล่น (ไม่บังคับ)</div>${[0, 1, 2, 3].slice(0, cfg.players).map(i => `<input type="text" class="nm" maxlength="30" placeholder="ผู้เล่น ${i + 1}" value="${esc(cfg.names[i] || "")}" onchange="cfg.names[${i}]=this.value.trim();save()">`).join("")}</div>
-  <div class="card" style="--c:#0ea5a4"><h2>🎮 โหมดการเล่น</h2>${seg("mode", [["auto", "อัตโนมัติ"], ["manual", "Manual (ครูควบคุม)"]])}<p class="muted">Manual: ย้อนกลับและข้ามไปข้อถัดไปได้ · ตั้งเวลาทีละข้อได้ · เฉลยด้วยตัวเอง (ไม่เฉลยอัตโนมัติทั้งเมื่อทุกคนตอบครบและเมื่อหมดเวลา ครูกดเฉลยเอง)</p></div>
+  <div class="card" style="--c:#d97706"><h2>📝 จำนวนข้อต่อเกม</h2>${seg("rounds", [[10, "10 ข้อ"], [15, "15 ข้อ"], [20, "20 ข้อ"]])}<p class="muted">ชุดคำถามตอนนี้มี ${QUESTIONS.length} ข้อ · เล่นจริง ${ROUNDS} ข้อ · เรียงจากง่ายไปยาก</p></div>
+  <div class="card" style="--c:#0ea5a4"><h2>🎮 โหมดการเล่น</h2>${seg("mode", [["auto", "อัตโนมัติ"], ["manual", "Manual (ครูควบคุม)"]])}<p class="muted">อัตโนมัติ: เฉลยเมื่อทุกคนตอบครบหรือหมดเวลา แล้วเปลี่ยนข้ออัตโนมัติใน 4 วินาที (ข้อสุดท้ายกดดูผลสรุปเอง)<br>Manual: ย้อนกลับและข้ามไปข้อถัดไปได้ · ตั้งเวลาทีละข้อได้ · เฉลยด้วยตัวเอง (ไม่เฉลยอัตโนมัติทั้งเมื่อทุกคนตอบครบและเมื่อหมดเวลา ครูกดเฉลยเอง)</p></div>
   <div class="card" style="--c:#e07a1f"><h2>⏱️ เวลาต่อข้อ</h2>${seg("time", [[5, "5 วิ"], [10, "10 วิ"], [15, "15 วิ"], [20, "20 วิ"], [30, "30 วิ"], [0, "ไม่กำหนด"]])}
     <div class="lab">กำหนดเอง (3-120 วินาที)</div>
     <input type="number" min="3" max="120" placeholder="ไม่กำหนด" value="${cfg.time || ""}" onchange="set('time',Math.max(3,Math.min(120,Math.round(+this.value)||10)))"> วินาที</div>
@@ -410,7 +420,8 @@ function settings() {
   <div class="card" style="--c:#d6336c"><h2>🔊 เสียง</h2>${seg("sound", [[true, "เปิด"], [false, "ปิด"]])}
     <div class="lab">ระดับเสียง ${cfg.vol}%</div>
     <input type="range" min="0" max="100" value="${cfg.vol}" onchange="set('vol',+this.value);beep(SND.ok)"></div>
-  <div class="menu"><button onclick="start(cfg.players)">▶ เริ่มเล่น</button></div></div>`;
+  <div class="menu"><button onclick="start(cfg.players)">▶ เริ่มเล่น</button></div>
+  <p class="copy">© 2026 อุดม นุพันธ์. สงวนลิขสิทธิ์ทุกประการ</p></div>`;
 }
 const API_URL = "https://script.google.com/macros/s/AKfycbzBQP3cFKa9kTxcvx3BsPbjcJJ07JgH5RuwNhNGOddKxptMpbE5UrDcVrdMIS5iHjX1/exec"; // ใส่ URL ของ Apps Script Web App (/exec) ถ้าเว้นว่างเกมจะทำงานแบบ standalone
 const GAS = (typeof google !== "undefined" && google.script && google.script.run) ? "gas" : API_URL ? "api" : "";
